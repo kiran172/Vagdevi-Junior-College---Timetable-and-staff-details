@@ -124,3 +124,6 @@ Frontend on Vercel:
 - **Auto-merging BIPC sections** (VJM into VJE1 for Phy/Che): book it once
   manually with "Combine with" and lock it; the engine respects it. A rule
   for the engine to do this itself would go in `engine.py`.
+
+To run locally
+http://localhost:5173 
