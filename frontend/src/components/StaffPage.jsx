@@ -224,29 +224,39 @@ function StaffEditor({ staffRow, subjects, campuses, isAdmin, onClose, onSaved }
 
 function AvailabilityEditor({ staff, campuses, onClose }) {
   const [allSlots, setAllSlots] = useState([]); // [{campus, slots}]
-  const [unavailable, setUnavailable] = useState(new Set());
+  const [blocked, setBlocked] = useState(new Set()); // slot ids that are blocked
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
   useEffect(() => {
     Promise.all([
       api(`/staff/${staff.id}/availability`),
-      api('/campuses'),
       ...campuses.map((c) =>
         api('/time-slots', { params: { campus_id: c.id } })
           .then((slots) => ({ campus: c, slots: slots.filter((s) => s.kind === 'PERIOD') }))
       ),
-    ]).then(([avail, _cs, ...campusSlots]) => {
-      setUnavailable(new Set(avail.slot_ids_unavailable));
+    ]).then(([avail, ...campusSlots]) => {
+      setBlocked(new Set(avail.slot_ids_unavailable));
       setAllSlots(campusSlots);
     }).catch((e) => setErr(e.message));
   }, [staff.id, campuses]);
 
   function toggle(slotId) {
-    const next = new Set(unavailable);
-    if (next.has(slotId)) next.delete(slotId);
-    else next.add(slotId);
-    setUnavailable(next);
+    const next = new Set(blocked);
+    if (next.has(slotId)) next.delete(slotId); else next.add(slotId);
+    setBlocked(next);
+  }
+
+  function blockAllForCampus(slots) {
+    const next = new Set(blocked);
+    slots.forEach((s) => next.add(s.id));
+    setBlocked(next);
+  }
+
+  function clearAllForCampus(slots) {
+    const next = new Set(blocked);
+    slots.forEach((s) => next.delete(s.id));
+    setBlocked(next);
   }
 
   async function save() {
@@ -254,52 +264,67 @@ function AvailabilityEditor({ staff, campuses, onClose }) {
     try {
       await api(`/staff/${staff.id}/availability`, {
         method: 'PUT',
-        body: { slot_ids_unavailable: [...unavailable] },
+        body: { slot_ids_unavailable: [...blocked] },
       });
       onClose();
     } catch (e) { setErr(e.message); }
     finally { setBusy(false); }
   }
 
+  const totalBlocked = blocked.size;
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" style={{ width: 560 }} onClick={(e) => e.stopPropagation()}>
-        <h3>Availability — {staff.code}</h3>
+      <div className="modal" style={{ width: 580 }} onClick={(e) => e.stopPropagation()}>
+        <h3>Blocked slots — {staff.code}</h3>
         <div className="sub">
-          Checked = available (default). Uncheck slots when this person cannot attend.
-          The auto-assign engine will skip unavailable slots.
+          Click a slot to block it (red = blocked, white = available). Blocked slots
+          are skipped by auto-assign and rejected on manual booking.
+          {totalBlocked > 0 && <strong> {totalBlocked} slot{totalBlocked > 1 ? 's' : ''} blocked.</strong>}
         </div>
         {err && <div className="alert">{err}</div>}
-        {allSlots.map(({ campus, slots }) => (
-          slots.length === 0 ? null : (
-            <div key={campus.id} style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11,
-                textTransform: 'uppercase', color: 'var(--ink-soft)',
-                marginBottom: 6, letterSpacing: '0.06em' }}>
-                {campus.name}
+        {allSlots.map(({ campus, slots }) => {
+          if (!slots.length) return null;
+          const campusBlocked = slots.filter((s) => blocked.has(s.id)).length;
+          const allCampusBlocked = campusBlocked === slots.length;
+          return (
+            <div key={campus.id} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11,
+                  textTransform: 'uppercase', color: 'var(--ink-soft)', letterSpacing: '0.06em' }}>
+                  {campus.name}
+                </span>
+                {campusBlocked > 0 && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11,
+                    color: 'var(--pen-red)' }}>
+                    {campusBlocked}/{slots.length} blocked
+                  </span>
+                )}
+                <button className="btn small" style={{ marginLeft: 'auto' }}
+                  onClick={() => allCampusBlocked ? clearAllForCampus(slots) : blockAllForCampus(slots)}>
+                  {allCampusBlocked ? 'Unblock all' : 'Block all'}
+                </button>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                 {slots.map((s) => {
-                  const avail = !unavailable.has(s.id);
+                  const isBlocked = blocked.has(s.id);
                   return (
-                    <label key={s.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      fontSize: 12, fontFamily: 'var(--font-mono)',
-                      padding: '3px 7px',
-                      border: '1px solid var(--rule-light)',
-                      background: avail ? 'var(--pen-blue-soft)' : 'var(--pen-red-soft)',
-                      cursor: 'pointer',
-                    }}>
-                      <input type="checkbox" checked={avail}
-                        onChange={() => toggle(s.id)} />
-                      {s.label}
-                    </label>
+                    <button key={s.id} className="btn small"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        background: isBlocked ? 'var(--pen-red-soft)' : 'var(--paper-raised)',
+                        borderColor: isBlocked ? 'var(--pen-red)' : 'var(--rule-light)',
+                        color: isBlocked ? 'var(--pen-red)' : 'var(--ink-soft)',
+                      }}
+                      onClick={() => toggle(s.id)}>
+                      {isBlocked ? '✕ ' : ''}{s.label}
+                    </button>
                   );
                 })}
               </div>
             </div>
-          )
-        ))}
+          );
+        })}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
           <button className="btn" onClick={onClose}>Cancel</button>
           <button className="btn primary" onClick={save} disabled={busy}>Save</button>

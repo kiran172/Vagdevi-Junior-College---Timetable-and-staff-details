@@ -27,6 +27,15 @@ def list_staff(db: DbSession = Depends(get_db),
     return [_serialize(s, user["role"]) for s in rows]
 
 
+@router.get("/slot-availability")
+def slot_availability(slot_id: int, db: DbSession = Depends(get_db),
+                      user=Depends(require_user)):
+    """Return staff IDs that are blocked for the given slot."""
+    rows = db.query(models.StaffAvailability).filter_by(
+        time_slot_id=slot_id, available=False).all()
+    return {"unavailable_staff_ids": [r.staff_id for r in rows]}
+
+
 @router.get("/{sid}")
 def get_staff(sid: int, db: DbSession = Depends(get_db),
               user=Depends(require_user)):

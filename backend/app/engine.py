@@ -60,9 +60,19 @@ def run_engine(db: DbSession, campus_id: int, clear_existing: bool = True):
     for av in db.query(models.StaffAvailability).filter_by(available=False).all():
         unavailable_slots[av.staff_id].add(av.time_slot_id)
 
+    # Campus-restricted staff: if a staff member has home_campuses set, they
+    # may only be assigned on those campuses. No home_campuses = unrestricted.
+    campus_restricted: set[int] = set()
+    for st in staff_all:
+        home_ids = [c.id for c in st.home_campuses]
+        if home_ids and campus_id not in home_ids:
+            campus_restricted.add(st.id)
+
     lecturers_by_subject = defaultdict(list)
     jls = []
     for st in staff_all:
+        if st.id in campus_restricted:
+            continue  # skip staff not assigned to this campus
         if st.role == "JL":
             jls.append(st)
         for subj in st.subjects:

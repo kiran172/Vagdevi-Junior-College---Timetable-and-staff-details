@@ -72,9 +72,29 @@ def validate_and_create(db: DbSession, body: schemas.SessionIn,
         raise HTTPException(422, "Pick a subject (or mark as study hour)")
 
     if body.staff_id:
+        who = db.get(models.Staff, body.staff_id)
+        if not who:
+            raise HTTPException(404, "Staff member not found")
+
+        # Campus restriction: if staff has home campuses set, the slot's campus
+        # must be one of them.
+        home_ids = [c.id for c in who.home_campuses]
+        if home_ids and slot.campus_id not in home_ids:
+            home_names = ", ".join(c.name for c in who.home_campuses)
+            raise HTTPException(409,
+                f"{who.code} is restricted to {home_names} and cannot be "
+                f"assigned to a slot on another campus")
+
+        # Availability: check explicit unavailability for this slot.
+        blocked = db.query(models.StaffAvailability).filter_by(
+            staff_id=body.staff_id, time_slot_id=slot.id,
+            available=False).first()
+        if blocked:
+            raise HTTPException(409,
+                f"{who.code} is marked unavailable at {slot.label}")
+
         conflict = clash.find_staff_clash(db, body.staff_id, slot, body.half)
         if conflict:
-            who = db.get(models.Staff, body.staff_id)
             raise HTTPException(409, f"Clash: {who.code} is already taking "
                                      f"{clash.describe(db, conflict)}")
     for sec_id in body.section_ids:

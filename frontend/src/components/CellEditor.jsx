@@ -11,6 +11,7 @@ export default function CellEditor({ section, slot, sections, sessions,
   onClose, onChanged }) {
   const [subjects, setSubjects] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [unavailableIds, setUnavailableIds] = useState(new Set()); // staff ids unavailable at this slot
   const [subjectId, setSubjectId] = useState('');
   const [staffId, setStaffId] = useState('');
   const [half, setHalf] = useState('FULL');
@@ -20,18 +21,37 @@ export default function CellEditor({ section, slot, sections, sessions,
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    Promise.all([api('/subjects'), api('/staff')])
-      .then(([su, st]) => { setSubjects(su); setStaff(st); })
+    Promise.all([
+      api('/subjects'),
+      api('/staff'),
+      api('/staff/slot-availability', { params: { slot_id: slot.id } }),
+    ])
+      .then(([su, st, unavail]) => {
+        setSubjects(su);
+        setStaff(st);
+        setUnavailableIds(new Set(unavail.unavailable_staff_ids));
+      })
       .catch((e) => setErr(e.message));
-  }, []);
+  }, [slot.id]);
 
-  // When a subject is picked, only show lecturers who teach it.
+  // Show only staff who:
+  // 1. are active
+  // 2. are not blocked at this slot
+  // 3. belong to this slot's campus (or have no campus restriction)
   const eligibleStaff = useMemo(() => {
-    if (isSH) return staff.filter((s) => s.role === 'JL' && s.active);
-    if (!subjectId) return staff.filter((s) => s.active);
-    return staff.filter((s) => s.active &&
-      s.subjects.some((x) => x.id === +subjectId));
-  }, [staff, subjectId, isSH]);
+    const campusId = slot.campus_id;
+    return staff.filter((s) => {
+      if (!s.active) return false;
+      if (unavailableIds.has(s.id)) return false;
+      // campus restriction: if staff has home campuses, one must match
+      if (s.home_campus_ids && s.home_campus_ids.length > 0) {
+        if (!s.home_campus_ids.includes(campusId)) return false;
+      }
+      if (isSH) return s.role === 'JL';
+      if (!subjectId) return true;
+      return s.subjects.some((x) => x.id === +subjectId);
+    });
+  }, [staff, subjectId, isSH, unavailableIds, slot.campus_id]);
 
   useEffect(() => {
     // Reset lecturer if no longer eligible after a subject change.
