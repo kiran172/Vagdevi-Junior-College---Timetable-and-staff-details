@@ -1,0 +1,409 @@
+/* Vagdevi Timetable - design tokens.
+   The look is taken from the college's own printed sheets: paper ground,
+   strong ruled grid, all-caps masthead, mono lecturer codes, vertical
+   BREAK bands, red-pen for clashes. Change a token here, it changes
+   everywhere. */
+
+:root {
+  --paper: #faf8f2;
+  --paper-raised: #ffffff;
+  --ink: #17171c;
+  --ink-soft: #55555e;
+  --rule: #2e2e36;          /* heavy grid rules, like the print */
+  --rule-light: #d8d4c8;
+  --pen-blue: #1b3fa0;      /* fountain-pen blue: actions, selection */
+  --pen-blue-soft: #e8edfa;
+  --pen-red: #c8362b;       /* red correction pen: clashes, errors */
+  --pen-red-soft: #fbeae8;
+  --pencil: #8a8783;        /* study hours, muted info */
+  --lock-amber: #a06b12;
+  --band: repeating-linear-gradient(135deg, #efece3 0 6px, #e4e0d4 6px 12px);
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'Archivo', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+/* ---------- masthead ---------- */
+.masthead {
+  border-bottom: 3px double var(--rule);
+  padding: 14px 20px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.masthead h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 110%;
+  font-size: 21px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.masthead .year {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.masthead .who {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.role-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border: 1.5px solid var(--rule);
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.role-chip.admin { background: var(--ink); color: var(--paper); }
+
+/* ---------- nav tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--rule);
+  padding: 0 20px;
+  overflow-x: auto;
+}
+.tabs button {
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button.active {
+  color: var(--pen-blue);
+  border-bottom-color: var(--pen-blue);
+}
+.tabs button:focus-visible,
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--pen-blue);
+  outline-offset: 1px;
+}
+
+.page { padding: 16px 20px 48px; }
+
+/* ---------- toolbar ---------- */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.toolbar .spacer { flex: 1; }
+
+select, input[type="text"], input[type="number"], input[type="password"], input[type="date"] {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-radius: 0;
+}
+label.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+button.btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border: 1.5px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 0;
+}
+button.btn:hover { background: var(--pen-blue-soft); }
+button.btn.primary { background: var(--pen-blue); border-color: var(--pen-blue); color: #fff; }
+button.btn.primary:hover { background: #16348c; }
+button.btn.danger { color: var(--pen-red); border-color: var(--pen-red); }
+button.btn.danger:hover { background: var(--pen-red-soft); }
+button.btn.small { padding: 4px 9px; font-size: 11px; }
+button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------- the grid (signature element) ---------- */
+.grid-wrap {
+  overflow: auto;
+  border: 2px solid var(--rule);
+  background: var(--paper-raised);
+  max-height: calc(100vh - 210px);
+}
+table.tt {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+table.tt th, table.tt td {
+  border: 1px solid var(--rule);
+  padding: 0;
+  vertical-align: top;
+}
+table.tt thead th {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 6px;
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  white-space: nowrap;
+}
+table.tt th.sec-h {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: var(--paper);
+}
+table.tt td.sec-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  position: sticky;
+  left: 0;
+  background: var(--paper);
+  z-index: 2;
+  white-space: nowrap;
+}
+table.tt td.sec-name .stream {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+/* vertical BREAK / LUNCH bands, stacked letters like the paper sheet */
+td.band {
+  background: var(--band);
+  text-align: center;
+  vertical-align: middle !important;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  width: 26px;
+  min-width: 26px;
+}
+td.band .stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  align-items: center;
+}
+
+/* one timetable cell */
+td.cell {
+  min-width: 86px;
+  height: 52px;
+  cursor: pointer;
+  background: var(--paper-raised);
+}
+td.cell:hover { background: var(--pen-blue-soft); }
+.cell-inner { display: flex; flex-direction: column; height: 100%; min-height: 52px; }
+.chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 4px;
+  position: relative;
+}
+.chip + .chip { border-top: 1px solid var(--rule); } /* split-period divider */
+.chip .subj {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
+.chip .who {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--pen-blue);
+}
+.chip.sh .subj { color: var(--pencil); font-weight: 600; }
+.chip.sh .who { color: var(--pencil); }
+.chip .badges {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  display: flex;
+  gap: 3px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+}
+.badge-lock { color: var(--lock-amber); }
+.badge-comb { color: var(--pen-blue); }
+
+/* ---------- panels / modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 23, 28, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 16px;
+}
+.modal {
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  box-shadow: 6px 6px 0 rgba(23, 23, 28, 0.25);
+  width: 460px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 18px;
+}
+.modal h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 15px;
+}
+.modal .sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid .wide { grid-column: 1 / -1; }
+
+.alert {
+  border: 1.5px solid var(--pen-red);
+  background: var(--pen-red-soft);
+  color: var(--pen-red);
+  padding: 8px 10px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+.alert.ok {
+  border-color: var(--pen-blue);
+  background: var(--pen-blue-soft);
+  color: var(--pen-blue);
+}
+.note { font-size: 12px; color: var(--ink-soft); }
+
+.existing-session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--rule-light);
+  background: var(--paper-raised);
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.existing-session .grow { flex: 1; }
+
+/* ---------- data tables (staff, sections, workload...) ---------- */
+table.data {
+  border-collapse: collapse;
+  width: 100%;
+  background: var(--paper-raised);
+  border: 2px solid var(--rule);
+}
+table.data th, table.data td {
+  border: 1px solid var(--rule-light);
+  padding: 6px 9px;
+  text-align: left;
+  font-size: 13px;
+}
+table.data th {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  background: var(--paper);
+  border-bottom: 2px solid var(--rule);
+}
+table.data td.mono, .mono { font-family: var(--font-mono); }
+table.data td.num { text-align: right; font-family: var(--font-mono); }
+table.data tr:hover td { background: var(--pen-blue-soft); }
+.muted { color: var(--ink-soft); }
+.under { color: var(--pen-red); font-weight: 600; }
+.exact { color: var(--pen-blue); }
+
+/* ---------- login ---------- */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(250, 248, 242, 0.94), rgba(250, 248, 242, 0.94)),
+    var(--band);
+}
+.login-card {
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  box-shadow: 8px 8px 0 rgba(23, 23, 28, 0.2);
+  padding: 28px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+}
+.login-card h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 19px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 2px;
+}
+.login-card .sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+.login-card form { display: flex; flex-direction: column; gap: 12px; }
+
+/* unfilled report list */
+ul.unfilled { margin: 8px 0; padding-left: 18px; }
+ul.unfilled li { font-family: var(--font-mono); font-size: 12px; color: var(--pen-red); margin-bottom: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+@media (max-width: 640px) {
+  .masthead h1 { font-size: 16px; }
+  .page { padding: 12px 10px 40px; }
+  .grid-wrap { max-height: calc(100vh - 240px); }
+}
