@@ -32,6 +32,9 @@ export default function WorkloadPage() {
   return (
     <div>
       {err && <div className="alert">{err}</div>}
+      <div className="toolbar no-print" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={() => window.print()}>Print</button>
+      </div>
 
       <h3 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: 14 }}>
         Lecturer workload (all campuses)

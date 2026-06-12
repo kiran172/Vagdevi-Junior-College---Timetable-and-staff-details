@@ -54,6 +54,12 @@ def run_engine(db: DbSession, campus_id: int, clear_existing: bool = True):
     subjects = {s.id: s for s in db.query(models.Subject).all()}
 
     staff_all = db.query(models.Staff).filter_by(active=True).all()
+
+    # Build per-staff set of unavailable slot ids from StaffAvailability table.
+    unavailable_slots: dict[int, set] = defaultdict(set)
+    for av in db.query(models.StaffAvailability).filter_by(available=False).all():
+        unavailable_slots[av.staff_id].add(av.time_slot_id)
+
     lecturers_by_subject = defaultdict(list)
     jls = []
     for st in staff_all:
@@ -106,14 +112,21 @@ def run_engine(db: DbSession, campus_id: int, clear_existing: bool = True):
     proposal = []
     unfilled = []
 
+    def is_available(staff_id, slot):
+        """Return False if staff has explicitly marked this slot unavailable."""
+        return slot.id not in unavailable_slots.get(staff_id, set())
+
     def pick_lecturer(section_id, subject_id, slot, half):
         pref_id = preferred.get((section_id, subject_id))
         candidates = lecturers_by_subject.get(subject_id, [])
         if pref_id:
             pref = next((c for c in candidates if c.id == pref_id), None)
-            if pref and staff_busy.is_free(pref.id, slot, half):
+            if (pref and is_available(pref.id, slot)
+                    and staff_busy.is_free(pref.id, slot, half)):
                 return pref
-        free = [c for c in candidates if staff_busy.is_free(c.id, slot, half)]
+        free = [c for c in candidates
+                if is_available(c.id, slot)
+                and staff_busy.is_free(c.id, slot, half)]
         if not free:
             return None
         # Least-loaded among free, full-timers favoured by base ordering.
@@ -189,7 +202,9 @@ def run_engine(db: DbSession, campus_id: int, clear_existing: bool = True):
         for slot in slots:
             if not section_busy.is_free(section.id, slot, "FULL"):
                 continue
-            free_jls = [j for j in jls if staff_busy.is_free(j.id, slot, "FULL")]
+            free_jls = [j for j in jls
+                        if is_available(j.id, slot)
+                        and staff_busy.is_free(j.id, slot, "FULL")]
             free_jls.sort(key=lambda j: staff_busy.load[j.id])
             jl = free_jls[0] if free_jls else None
             if jl:

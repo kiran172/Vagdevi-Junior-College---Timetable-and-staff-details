@@ -82,11 +82,12 @@ export default function TimetablePage({ role }) {
           </select>
         </label>
         <div className="spacer" />
-        <button className="btn primary" onClick={runPreview} disabled={busy}>
+        <button className="btn no-print" onClick={() => window.print()}>Print</button>
+        <button className="btn primary no-print" onClick={runPreview} disabled={busy}>
           Auto-assign (preview)
         </button>
         {role === 'ADMIN' && (
-          <button className="btn danger" onClick={clearCampus} disabled={busy}>
+          <button className="btn danger no-print" onClick={clearCampus} disabled={busy}>
             Clear campus
           </button>
         )}

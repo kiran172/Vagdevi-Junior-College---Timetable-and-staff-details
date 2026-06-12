@@ -89,9 +89,10 @@ def seed_if_empty(db: DbSession):
 
     # ---------------- staff (codes from the filled sheet + Eng list) ------
     def staff(name, code, role, emp, subj_codes, campus=None):
-        st = models.Staff(name=name, code=code, role=role, employment=emp,
-                          home_campus_id=campus.id if campus else None)
+        st = models.Staff(name=name, code=code, role=role, employment=emp)
         st.subjects = [subjects[c] for c in subj_codes]
+        if campus:
+            st.home_campuses = [campus]
         db.add(st)
         return st
 

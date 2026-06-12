@@ -58,7 +58,6 @@ class Staff(Base):
     phone_number = Column(String, default="")
     role = Column(String, default="LECTURER")            # LECTURER | JL
     employment = Column(String, default="FULL_TIME")     # FULL_TIME | PART_TIME
-    home_campus_id = Column(Integer, ForeignKey("campuses.id"), nullable=True)
     active = Column(Boolean, default=True)
     # ---- admin-only fields (hidden from operators at the schema layer) ----
     salary_discussed = Column(Float, nullable=True)
@@ -67,6 +66,12 @@ class Staff(Base):
     notes_admin = Column(String, nullable=True)
 
     subjects = relationship("Subject", secondary="staff_subjects")
+    home_campuses = relationship("Campus", secondary="staff_campuses")
+    availability = relationship("StaffAvailability", cascade="all, delete-orphan")
+
+    @property
+    def home_campus_ids(self):
+        return [c.id for c in self.home_campuses]
 
 
 class StaffSubject(Base):
@@ -75,6 +80,27 @@ class StaffSubject(Base):
                       primary_key=True)
     subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="CASCADE"),
                         primary_key=True)
+
+
+class StaffCampus(Base):
+    """Many-to-many: a staff member can belong to multiple home campuses."""
+    __tablename__ = "staff_campuses"
+    staff_id = Column(Integer, ForeignKey("staff.id", ondelete="CASCADE"),
+                      primary_key=True)
+    campus_id = Column(Integer, ForeignKey("campuses.id", ondelete="CASCADE"),
+                       primary_key=True)
+
+
+class StaffAvailability(Base):
+    """Per-slot availability override. Absence = available (default open).
+    A row with available=False means the staff member is NOT free that slot.
+    """
+    __tablename__ = "staff_availability"
+    staff_id = Column(Integer, ForeignKey("staff.id", ondelete="CASCADE"),
+                      primary_key=True)
+    time_slot_id = Column(Integer, ForeignKey("time_slots.id", ondelete="CASCADE"),
+                          primary_key=True)
+    available = Column(Boolean, default=True, nullable=False)
 
 
 class Section(Base):

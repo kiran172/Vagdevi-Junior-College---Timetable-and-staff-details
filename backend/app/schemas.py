@@ -74,7 +74,7 @@ class StaffBaseIn(BaseModel):
     phone_number: str = ""
     role: str = "LECTURER"
     employment: str = "FULL_TIME"
-    home_campus_id: Optional[int] = None
+    home_campus_ids: List[int] = []
     active: bool = True
     subject_ids: List[int] = []
 
@@ -94,7 +94,7 @@ class StaffOperatorOut(ORM):
     phone_number: str
     role: str
     employment: str
-    home_campus_id: Optional[int]
+    home_campus_ids: List[int] = []
     active: bool
     subjects: List[SubjectOut] = []
 
@@ -158,6 +158,16 @@ class SessionOut(ORM):
     half: str
     locked: bool
     section_ids: List[int] = []
+
+
+# ---------- staff availability ----------
+class AvailabilityIn(BaseModel):
+    slot_ids_unavailable: List[int] = []  # all other slots are considered available
+
+
+class AvailabilitySlot(ORM):
+    time_slot_id: int
+    available: bool
 
 
 # ---------- auto-assign ----------

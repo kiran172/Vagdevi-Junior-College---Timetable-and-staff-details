@@ -40,14 +40,17 @@ def _apply(s: models.Staff, body: schemas.StaffAdminIn, db: DbSession,
            is_admin: bool):
     data = body.model_dump()
     subject_ids = data.pop("subject_ids")
+    campus_ids = data.pop("home_campus_ids")
     sensitive = ("salary_discussed", "date_of_interview",
                  "campaign_village_town", "notes_admin")
     for k, v in data.items():
         if k in sensitive and not is_admin:
-            continue  # operators can never write sensitive fields
+            continue
         setattr(s, k, v)
     s.subjects = db.query(models.Subject).filter(
         models.Subject.id.in_(subject_ids)).all() if subject_ids else []
+    s.home_campuses = db.query(models.Campus).filter(
+        models.Campus.id.in_(campus_ids)).all() if campus_ids else []
 
 
 @router.post("")
@@ -77,6 +80,32 @@ def update_staff(sid: int, body: schemas.StaffAdminIn,
     db.commit()
     db.refresh(s)
     return _serialize(s, user["role"])
+
+
+@router.get("/{sid}/availability")
+def get_availability(sid: int, db: DbSession = Depends(get_db),
+                     user=Depends(require_user)):
+    s = db.get(models.Staff, sid)
+    if not s:
+        raise HTTPException(404, "Staff member not found")
+    rows = db.query(models.StaffAvailability).filter_by(staff_id=sid).all()
+    unavailable = {r.time_slot_id for r in rows if not r.available}
+    return {"slot_ids_unavailable": list(unavailable)}
+
+
+@router.put("/{sid}/availability")
+def set_availability(sid: int, body: schemas.AvailabilityIn,
+                     db: DbSession = Depends(get_db),
+                     user=Depends(require_user)):
+    s = db.get(models.Staff, sid)
+    if not s:
+        raise HTTPException(404, "Staff member not found")
+    db.query(models.StaffAvailability).filter_by(staff_id=sid).delete()
+    for slot_id in body.slot_ids_unavailable:
+        db.add(models.StaffAvailability(
+            staff_id=sid, time_slot_id=slot_id, available=False))
+    db.commit()
+    return {"ok": True}
 
 
 @router.delete("/{sid}")

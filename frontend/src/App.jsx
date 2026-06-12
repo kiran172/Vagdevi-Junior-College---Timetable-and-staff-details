@@ -37,7 +37,10 @@ export default function App() {
       <header className="masthead">
         <h1>Vagdevi Junior College</h1>
         <span className="year">Timetable 2026-27</span>
-        <div className="who">
+        <span className="year print-only" style={{ marginLeft: 8 }}>
+          — {TABS.find(([k]) => k === tab)?.[1]}
+        </span>
+        <div className="who no-print">
           <span className={'role-chip' + (auth.role === 'ADMIN' ? ' admin' : '')}>
             {auth.role}
           </span>
@@ -48,7 +51,7 @@ export default function App() {
           </button>
         </div>
       </header>
-      <nav className="tabs" aria-label="Main">
+      <nav className="tabs no-print" aria-label="Main">
         {TABS.map(([key, label]) => (
           <button key={key} className={tab === key ? 'active' : ''}
             onClick={() => setTab(key)}>{label}</button>

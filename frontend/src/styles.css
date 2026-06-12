@@ -402,6 +402,45 @@ ul.unfilled li { font-family: var(--font-mono); font-size: 12px; color: var(--pe
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- print ---------- */
+.no-print { /* elements hidden when printing */ }
+.print-only { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: inline !important; }
+  .masthead { border-bottom: 2px solid #000; padding: 8px 0 6px; }
+  .tabs { display: none; }
+  .page { padding: 0; }
+  .toolbar { margin-bottom: 8px; }
+  .toolbar .spacer { display: none; }
+  .grid-wrap {
+    overflow: visible;
+    max-height: none;
+    border: 1px solid #000;
+  }
+  table.tt, table.data {
+    font-size: 10px;
+    page-break-inside: auto;
+  }
+  table.tt th, table.tt td,
+  table.data th, table.data td {
+    border-color: #000;
+  }
+  table.tt thead th,
+  table.tt td.sec-name {
+    position: static; /* remove sticky positioning for print */
+    background: #f5f5f0;
+  }
+  td.cell { min-width: 60px; height: auto; cursor: default; }
+  td.cell:hover { background: none; }
+  .chip .subj { font-size: 10px; }
+  .chip .who { font-size: 9px; }
+  .modal-backdrop { display: none; }
+  .alert { display: none; }
+  body { background: #fff; }
+}
 @media (max-width: 640px) {
   .masthead h1 { font-size: 16px; }
   .page { padding: 12px 10px 40px; }
